@@ -3,17 +3,106 @@ document.addEventListener("DOMContentLoaded", () => {
   const activitySelect = document.getElementById("activity");
   const signupForm = document.getElementById("signup-form");
   const messageDiv = document.getElementById("message");
+  const adminActivitiesList = document.getElementById("admin-activities-list");
+  const newActivityForm = document.getElementById("new-activity-form");
 
-  // Function to fetch activities from API
+  function showMessage(text, type = "success") {
+    messageDiv.textContent = text;
+    messageDiv.className = type;
+    messageDiv.classList.remove("hidden");
+    setTimeout(() => {
+      messageDiv.classList.add("hidden");
+    }, 5000);
+  }
+
+  async function fetchAdminActivities() {
+    try {
+      const response = await fetch("/admin/activities");
+      const adminActivities = await response.json();
+      const pendingActivities = adminActivities.pending || {};
+
+      if (Object.keys(pendingActivities).length === 0) {
+        adminActivitiesList.innerHTML = "<p>No pending activities.</p>";
+        return;
+      }
+
+      adminActivitiesList.innerHTML = Object.entries(pendingActivities)
+        .map(
+          ([name, details]) => `
+            <div class="admin-activity-card">
+              <h4>${name}</h4>
+              <p>${details.description}</p>
+              <p><strong>Schedule:</strong> ${details.schedule}</p>
+              <p><strong>Capacity:</strong> ${details.max_participants}</p>
+              <div class="admin-actions">
+                <button class="approve-btn" data-activity="${name}">Approve</button>
+                <button class="reject-btn" data-activity="${name}">Reject</button>
+              </div>
+            </div>
+          `
+        )
+        .join("");
+
+      document.querySelectorAll(".approve-btn").forEach((button) => {
+        button.addEventListener("click", async () => {
+          const activity = button.getAttribute("data-activity");
+          const response = await fetch(
+            `/admin/activities/${encodeURIComponent(activity)}/approve`,
+            { method: "POST" }
+          );
+          const result = await response.json();
+          if (response.ok) {
+            showMessage(result.message, "success");
+            fetchActivities();
+            fetchAdminActivities();
+          } else {
+            showMessage(result.detail || "Could not approve activity.", "error");
+          }
+        });
+      });
+
+      document.querySelectorAll(".reject-btn").forEach((button) => {
+        button.addEventListener("click", async () => {
+          const activity = button.getAttribute("data-activity");
+          const reason = window.prompt(
+            `Why should ${activity} be rejected?`,
+            "Needs additional review."
+          );
+          if (reason === null) return;
+
+          const response = await fetch(
+            `/admin/activities/${encodeURIComponent(activity)}/reject`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ reason }),
+            }
+          );
+          const result = await response.json();
+          if (response.ok) {
+            showMessage(result.message, "success");
+            fetchActivities();
+            fetchAdminActivities();
+          } else {
+            showMessage(result.detail || "Could not reject activity.", "error");
+          }
+        });
+      });
+    } catch (error) {
+      adminActivitiesList.innerHTML =
+        "<p>Failed to load approval queue.</p>";
+      console.error("Error fetching admin activities:", error);
+    }
+  }
+
   async function fetchActivities() {
     try {
       const response = await fetch("/activities");
       const activities = await response.json();
 
-      // Clear loading message
+      activitySelect.innerHTML = '<option value="">-- Select an activity --</option>';
       activitiesList.innerHTML = "";
 
-      // Populate activities list
       Object.entries(activities).forEach(([name, details]) => {
         const activityCard = document.createElement("div");
         activityCard.className = "activity-card";
@@ -21,7 +110,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const spotsLeft =
           details.max_participants - details.participants.length;
 
-        // Create participants HTML with delete icons instead of bullet points
         const participantsHTML =
           details.participants.length > 0
             ? `<div class="participants-section">
@@ -49,14 +137,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
         activitiesList.appendChild(activityCard);
 
-        // Add option to select dropdown
         const option = document.createElement("option");
         option.value = name;
         option.textContent = name;
         activitySelect.appendChild(option);
       });
 
-      // Add event listeners to delete buttons
       document.querySelectorAll(".delete-btn").forEach((button) => {
         button.addEventListener("click", handleUnregister);
       });
@@ -67,7 +153,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Handle unregister functionality
   async function handleUnregister(event) {
     const button = event.target;
     const activity = button.getAttribute("data-activity");
@@ -86,31 +171,17 @@ document.addEventListener("DOMContentLoaded", () => {
       const result = await response.json();
 
       if (response.ok) {
-        messageDiv.textContent = result.message;
-        messageDiv.className = "success";
-
-        // Refresh activities list to show updated participants
+        showMessage(result.message, "success");
         fetchActivities();
       } else {
-        messageDiv.textContent = result.detail || "An error occurred";
-        messageDiv.className = "error";
+        showMessage(result.detail || "An error occurred", "error");
       }
-
-      messageDiv.classList.remove("hidden");
-
-      // Hide message after 5 seconds
-      setTimeout(() => {
-        messageDiv.classList.add("hidden");
-      }, 5000);
     } catch (error) {
-      messageDiv.textContent = "Failed to unregister. Please try again.";
-      messageDiv.className = "error";
-      messageDiv.classList.remove("hidden");
+      showMessage("Failed to unregister. Please try again.", "error");
       console.error("Error unregistering:", error);
     }
   }
 
-  // Handle form submission
   signupForm.addEventListener("submit", async (event) => {
     event.preventDefault();
 
@@ -130,31 +201,49 @@ document.addEventListener("DOMContentLoaded", () => {
       const result = await response.json();
 
       if (response.ok) {
-        messageDiv.textContent = result.message;
-        messageDiv.className = "success";
+        showMessage(result.message, "success");
         signupForm.reset();
-
-        // Refresh activities list to show updated participants
         fetchActivities();
       } else {
-        messageDiv.textContent = result.detail || "An error occurred";
-        messageDiv.className = "error";
+        showMessage(result.detail || "An error occurred", "error");
       }
-
-      messageDiv.classList.remove("hidden");
-
-      // Hide message after 5 seconds
-      setTimeout(() => {
-        messageDiv.classList.add("hidden");
-      }, 5000);
     } catch (error) {
-      messageDiv.textContent = "Failed to sign up. Please try again.";
-      messageDiv.className = "error";
-      messageDiv.classList.remove("hidden");
+      showMessage("Failed to sign up. Please try again.", "error");
       console.error("Error signing up:", error);
     }
   });
 
-  // Initialize app
+  newActivityForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const payload = {
+      name: document.getElementById("new-activity-name").value,
+      description: document.getElementById("new-activity-description").value,
+      schedule: document.getElementById("new-activity-schedule").value,
+      max_participants: Number(document.getElementById("new-activity-capacity").value),
+    };
+
+    try {
+      const response = await fetch("/admin/activities", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const result = await response.json();
+
+      if (response.ok) {
+        showMessage(result.message, "info");
+        newActivityForm.reset();
+        fetchAdminActivities();
+      } else {
+        showMessage(result.detail || "Activity could not be submitted.", "error");
+      }
+    } catch (error) {
+      showMessage("Failed to submit activity for approval.", "error");
+      console.error("Error submitting activity:", error);
+    }
+  });
+
   fetchActivities();
+  fetchAdminActivities();
 });
