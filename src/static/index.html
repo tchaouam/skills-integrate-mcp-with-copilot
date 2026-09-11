@@ -39,6 +39,34 @@
         </form>
         <div id="message" class="hidden"></div>
       </section>
+
+      <section id="admin-container">
+        <h3>Admin Approval Queue</h3>
+        <div id="admin-activities-list">
+          <p>Loading admin queue...</p>
+        </div>
+
+        <form id="new-activity-form" class="admin-form">
+          <h4>Submit a new activity for review</h4>
+          <div class="form-group">
+            <label for="new-activity-name">Activity Name:</label>
+            <input id="new-activity-name" type="text" required />
+          </div>
+          <div class="form-group">
+            <label for="new-activity-description">Description:</label>
+            <textarea id="new-activity-description" rows="3" required></textarea>
+          </div>
+          <div class="form-group">
+            <label for="new-activity-schedule">Schedule:</label>
+            <input id="new-activity-schedule" type="text" required />
+          </div>
+          <div class="form-group">
+            <label for="new-activity-capacity">Max Participants:</label>
+            <input id="new-activity-capacity" type="number" min="1" value="10" required />
+          </div>
+          <button type="submit">Submit for Approval</button>
+        </form>
+      </section>
     </main>
 
     <footer>

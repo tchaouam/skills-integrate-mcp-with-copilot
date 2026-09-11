@@ -9,7 +9,7 @@ body {
   font-family: Arial, sans-serif;
   line-height: 1.6;
   color: #333;
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 20px;
   background-color: #f5f5f5;
@@ -35,12 +35,6 @@ main {
   justify-content: center;
 }
 
-@media (min-width: 768px) {
-  main {
-    grid-template-columns: 2fr 1fr;
-  }
-}
-
 section {
   background-color: white;
   padding: 20px;
@@ -57,7 +51,8 @@ section h3 {
   color: #1a237e;
 }
 
-.activity-card {
+.activity-card,
+.admin-activity-card {
   margin-bottom: 15px;
   padding: 15px;
   border: 1px solid #ddd;
@@ -65,16 +60,17 @@ section h3 {
   background-color: #f9f9f9;
 }
 
-.activity-card h4 {
+.activity-card h4,
+.admin-activity-card h4 {
   margin-bottom: 10px;
   color: #0066cc;
 }
 
-.activity-card p {
+.activity-card p,
+.admin-activity-card p {
   margin-bottom: 8px;
 }
 
-/* New styles for participants section */
 .participants-container {
   margin-top: 15px;
   padding-top: 12px;
@@ -100,7 +96,6 @@ section h3 {
   justify-content: space-between;
 }
 
-/* Remove the bullet point pseudo-element */
 .participants-section ul li::before {
   display: none;
 }
@@ -141,7 +136,8 @@ section h3 {
 }
 
 .form-group input,
-.form-group select {
+.form-group select,
+.form-group textarea {
   width: 100%;
   padding: 10px;
   border: 1px solid #ddd;
@@ -162,6 +158,38 @@ button {
 
 button:hover {
   background-color: #3949ab;
+}
+
+.approve-btn {
+  background-color: #2e7d32;
+}
+
+.approve-btn:hover {
+  background-color: #388e3c;
+}
+
+.reject-btn {
+  background-color: #c62828;
+}
+
+.reject-btn:hover {
+  background-color: #d32f2f;
+}
+
+.admin-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.admin-form {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #ddd;
+}
+
+.admin-form h4 {
+  margin-bottom: 12px;
 }
 
 .message {
